@@ -14,7 +14,9 @@ docker run -d --name library-mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=secret my
 ```
 
 ## 初始化数据库
-执行 `db/schema.sql` 创建数据库、表、触发器、视图与存储过程，并写入示例数据：
+**运行时自动建表**：应用启动时 `DatabaseManager` 会检测并自动创建表、触发器、视图、存储过程以及示例数据，无需手工执行脚本。
+
+如需手动初始化或在生产环境预建结构，可执行 `db/schema.sql`：
 ```bash
 mysql -h localhost -u root -p < db/schema.sql
 ```
