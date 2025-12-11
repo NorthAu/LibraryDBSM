@@ -22,7 +22,7 @@ mysql -h localhost -u root -p < db/schema.sql
 ```
 默认创建的业务账户：`library_admin / library_admin`。
 
-## 运行示例代码
+## 运行 Swing 前端
 1. 设定数据库连接（可通过环境变量覆盖）：
    - `DB_URL`：默认 `jdbc:mysql://localhost:3306/library_db?useSSL=false&serverTimezone=UTC`
    - `DB_USER`：默认 `library_admin`
@@ -32,13 +32,17 @@ mysql -h localhost -u root -p < db/schema.sql
 mvn -q package
 java -cp target/library-dbsm-1.0.0.jar:$(dependency:list -DincludeTypes=jar -DoutputAbsoluteArtifactFilename -DincludeScope=runtime -DexcludeTransitive -DappendOutput=true 2>/dev/null | awk '{print $NF}' | paste -sd: -) com.library.App
 ```
-运行时会示例化读者、图书并演示借阅、续借、归还与罚金计算。
+应用启动后会弹出 Swing 界面，提供以下常用操作：
+- 图书管理：新增/更新图书，新增分类、出版社，查看库存（含在册数）。
+- 读者管理：新增读者、刷新读者列表。
+- 借阅/续借/归还：选择读者和在册图书借阅，按借阅 ID 续借或归还，并自动计算罚金。
 
 ## 项目结构
 ```
 pom.xml                      # Maven 项目配置，依赖 MySQL 驱动、HikariCP、SLF4J
 src/main/java/com/library/   # Java 代码
   ├─ App.java                # 演示入口
+  ├─ ui/LibraryFrame         # Swing 前端
   ├─ config/DatabaseManager  # HikariCP 数据源配置
   ├─ model/                  # 记录类型定义（Book/Reader/Loan/...）
   ├─ repository/             # JDBC 持久层，封装借阅、续借、归还查询

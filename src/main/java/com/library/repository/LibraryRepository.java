@@ -2,7 +2,11 @@ package com.library.repository;
 
 import com.library.config.DatabaseManager;
 import com.library.model.Book;
+import com.library.model.BookDetail;
+import com.library.model.Category;
 import com.library.model.Loan;
+import com.library.model.LoanDetail;
+import com.library.model.Publisher;
 import com.library.model.Reader;
 
 import javax.sql.DataSource;
@@ -95,6 +99,133 @@ public class LibraryRepository {
                         rs.getLong("id"),
                         rs.getLong("book_id"),
                         rs.getLong("reader_id"),
+                        rs.getObject("borrowed_date", LocalDate.class),
+                        rs.getObject("due_date", LocalDate.class),
+                        rs.getObject("returned_date", LocalDate.class),
+                        rs.getInt("renewals"),
+                        rs.getDouble("fine_paid")
+                ));
+            }
+        }
+        return loans;
+    }
+
+    public long upsertCategory(String name) throws SQLException {
+        String sql = "INSERT INTO categories(name) VALUES (?) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+            statement.setString(1, name);
+            statement.executeUpdate();
+            try (ResultSet keys = statement.getGeneratedKeys()) {
+                if (keys.next()) {
+                    return keys.getLong(1);
+                }
+            }
+        }
+        throw new SQLException("无法获取分类 ID");
+    }
+
+    public long upsertPublisher(String name) throws SQLException {
+        String sql = "INSERT INTO publishers(name) VALUES (?) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+            statement.setString(1, name);
+            statement.executeUpdate();
+            try (ResultSet keys = statement.getGeneratedKeys()) {
+                if (keys.next()) {
+                    return keys.getLong(1);
+                }
+            }
+        }
+        throw new SQLException("无法获取出版社 ID");
+    }
+
+    public List<Category> listCategories() throws SQLException {
+        String sql = "SELECT id, name FROM categories ORDER BY name";
+        List<Category> categories = new ArrayList<>();
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            ResultSet rs = statement.executeQuery();
+            while (rs.next()) {
+                categories.add(new Category(rs.getLong("id"), rs.getString("name")));
+            }
+        }
+        return categories;
+    }
+
+    public List<Publisher> listPublishers() throws SQLException {
+        String sql = "SELECT id, name FROM publishers ORDER BY name";
+        List<Publisher> publishers = new ArrayList<>();
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            ResultSet rs = statement.executeQuery();
+            while (rs.next()) {
+                publishers.add(new Publisher(rs.getLong("id"), rs.getString("name")));
+            }
+        }
+        return publishers;
+    }
+
+    public List<BookDetail> listBooks() throws SQLException {
+        String sql = "SELECT b.id, b.isbn, b.title, b.category_id, c.name AS category_name, b.publisher_id, p.name AS publisher_name, " +
+                "b.published_date, b.total_copies, b.available_copies " +
+                "FROM books b JOIN categories c ON c.id = b.category_id JOIN publishers p ON p.id = b.publisher_id ORDER BY b.id DESC";
+        List<BookDetail> books = new ArrayList<>();
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            ResultSet rs = statement.executeQuery();
+            while (rs.next()) {
+                books.add(new BookDetail(
+                        rs.getLong("id"),
+                        rs.getString("isbn"),
+                        rs.getString("title"),
+                        rs.getLong("category_id"),
+                        rs.getString("category_name"),
+                        rs.getLong("publisher_id"),
+                        rs.getString("publisher_name"),
+                        rs.getObject("published_date", LocalDate.class),
+                        rs.getInt("total_copies"),
+                        rs.getInt("available_copies")
+                ));
+            }
+        }
+        return books;
+    }
+
+    public List<Reader> listReaders() throws SQLException {
+        String sql = "SELECT id, name, card_number, card_expiry, outstanding_fine FROM readers ORDER BY id DESC";
+        List<Reader> readers = new ArrayList<>();
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            ResultSet rs = statement.executeQuery();
+            while (rs.next()) {
+                readers.add(new Reader(
+                        rs.getLong("id"),
+                        rs.getString("name"),
+                        rs.getString("card_number"),
+                        rs.getObject("card_expiry", LocalDate.class),
+                        rs.getDouble("outstanding_fine")
+                ));
+            }
+        }
+        return readers;
+    }
+
+    public List<LoanDetail> listLoanDetails() throws SQLException {
+        String sql = "SELECT l.id, l.book_id, b.title AS book_title, l.reader_id, r.name AS reader_name, l.borrowed_date, l.due_date, " +
+                "l.returned_date, l.renewals, l.fine_paid FROM loans l " +
+                "JOIN books b ON b.id = l.book_id JOIN readers r ON r.id = l.reader_id ORDER BY l.borrowed_date DESC, l.id DESC";
+        List<LoanDetail> loans = new ArrayList<>();
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            ResultSet rs = statement.executeQuery();
+            while (rs.next()) {
+                loans.add(new LoanDetail(
+                        rs.getLong("id"),
+                        rs.getLong("book_id"),
+                        rs.getString("book_title"),
+                        rs.getLong("reader_id"),
+                        rs.getString("reader_name"),
                         rs.getObject("borrowed_date", LocalDate.class),
                         rs.getObject("due_date", LocalDate.class),
                         rs.getObject("returned_date", LocalDate.class),

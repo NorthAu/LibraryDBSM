@@ -1,7 +1,11 @@
 package com.library.service;
 
 import com.library.model.Book;
+import com.library.model.BookDetail;
+import com.library.model.Category;
 import com.library.model.Loan;
+import com.library.model.LoanDetail;
+import com.library.model.Publisher;
 import com.library.model.Reader;
 import com.library.repository.LibraryRepository;
 
@@ -43,6 +47,34 @@ public class LibraryService {
 
     public List<Loan> findLoansByReader(long readerId) throws SQLException {
         return repository.findLoansByReader(readerId);
+    }
+
+    public long saveCategory(String name) throws SQLException {
+        return repository.upsertCategory(name);
+    }
+
+    public long savePublisher(String name) throws SQLException {
+        return repository.upsertPublisher(name);
+    }
+
+    public List<Category> listCategories() throws SQLException {
+        return repository.listCategories();
+    }
+
+    public List<Publisher> listPublishers() throws SQLException {
+        return repository.listPublishers();
+    }
+
+    public List<BookDetail> listBooks() throws SQLException {
+        return repository.listBooks();
+    }
+
+    public List<Reader> listReaders() throws SQLException {
+        return repository.listReaders();
+    }
+
+    public List<LoanDetail> listLoanDetails() throws SQLException {
+        return repository.listLoanDetails();
     }
 
     private double calculateFine(LocalDate dueDate, LocalDate returnedDate) {
