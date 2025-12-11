@@ -22,7 +22,10 @@ public class LibraryRepository {
     }
 
     public void insertBook(Book book) throws SQLException {
-        String sql = "INSERT INTO books (isbn, title, category_id, publisher_id, published_date, total_copies, available_copies) VALUES (?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO books (isbn, title, category_id, publisher_id, published_date, total_copies, available_copies) " +
+                "VALUES (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE title=VALUES(title), category_id=VALUES(category_id), " +
+                "publisher_id=VALUES(publisher_id), published_date=VALUES(published_date), total_copies=VALUES(total_copies), " +
+                "available_copies=VALUES(available_copies)";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, book.isbn());
@@ -37,7 +40,8 @@ public class LibraryRepository {
     }
 
     public void insertReader(Reader reader) throws SQLException {
-        String sql = "INSERT INTO readers (name, card_number, card_expiry, outstanding_fine) VALUES (?,?,?,?)";
+        String sql = "INSERT INTO readers (name, card_number, card_expiry, outstanding_fine) VALUES (?,?,?,?) " +
+                "ON DUPLICATE KEY UPDATE name=VALUES(name), card_expiry=VALUES(card_expiry)";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, reader.name());
